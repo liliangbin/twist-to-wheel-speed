@@ -5,9 +5,9 @@ import time
 from RPi import GPIO
 
 PWMA = 36
-AIN1 = 40
-AIN2 = 38
-
+AIN1 = 40  # 1      0
+AIN2 = 38  # 0      1
+#  后退    前进
 PWMB = 33
 BIN1 = 37
 BIN2 = 35
@@ -32,15 +32,33 @@ class Raspberry(object):
         self.pwmB_dc = 0
         self.pwmB.start(self.pwmB_dc)
         # init duty_cycle
-        GPIO.output(AIN1, GPIO.HIGH)
+        GPIO.output(AIN1, GPIO.LOW)
         GPIO.output(AIN2, GPIO.LOW)
-        GPIO.output(BIN1, GPIO.HIGH)
+        GPIO.output(BIN1, GPIO.LOW)
         GPIO.output(BIN2, GPIO.LOW)
 
     # init the raspberry pin  output
 
-    def run(self, pwmA_dc, pwmB_dc, AIN1_IN=GPIO.HIGH, AIN2_IN=GPIO.LOW, BIN1_IN=GPIO.HIGH, BIN2_IN=GPIO.LOW):
+    def run(self, pwmA_dc=0, pwmB_dc=0):
         # INFO 2019/7/11 21:06 liliangbin  根据占空比转化为速度
+
+        AIN1_IN = GPIO.LOW
+        AIN2_IN = GPIO.HIGH
+        BIN1_IN = GPIO.LOW
+        BIN2_IN = GPIO.HIGH
+        # 默认是前进的方向
+        if pwmA_dc < 0:
+            AIN1_IN = GPIO.HIGH
+            AIN2_IN = GPIO.LOW  # 后退
+            pwmA_dc = -pwmA_dc
+        if pwmB_dc < 0:
+            BIN1_IN = GPIO.HIGH
+            BIN2_IN = GPIO.LOW  # 后退
+            pwmB_dc = -pwmB_dc  # 必须是一个正数
+
+        if pwmA_dc > 80: pwmA_dc = 80
+        if pwmB_dc > 80: pwmB_dc = 80
+        print 'pwma==', pwmA_dc, '   pwmb=', pwmB_dc
         self.pwmA_dc = pwmA_dc
         self.pwmB_dc = pwmB_dc
         self.pwmA.ChangeDutyCycle(self.pwmA_dc)
@@ -50,6 +68,8 @@ class Raspberry(object):
         GPIO.output(AIN2, AIN2_IN)
         GPIO.output(BIN1, BIN1_IN)
         GPIO.output(BIN2, BIN2_IN)
+        GPIO.output(PWMA, GPIO.HIGH)
+        GPIO.output(PWMB, GPIO.HIGH)
         time.sleep(0.3)
 
     def stop(self):
@@ -59,4 +79,8 @@ class Raspberry(object):
 
 
 if __name__ == '__main__':
-    pass
+    raspberry = Raspberry()
+    raspberry.run(pwmA_dc=40, pwmB_dc=40)
+
+    time.sleep(3)
+    raspberry.stop()
